@@ -3,7 +3,6 @@ import * as web3 from "@solana/web3.js";
 
 import { router, publicProcedure } from "../trpc";
 
-
 export const mainRouter = router({
   example: publicProcedure
     .input(z.object({ text: z.string().nullish() }).nullish())
@@ -15,8 +14,7 @@ export const mainRouter = router({
   getBalance: publicProcedure
     .input(z.object({ address: z.string().optional() }))
     .query(async ({ input }) => {
-      
-      if(!input.address) return{address: "", balance: 0}
+      if (!input.address) return { address: "", balance: 0 };
 
       const connection = new web3.Connection(web3.clusterApiUrl("devnet"));
 
@@ -54,5 +52,30 @@ export const mainRouter = router({
         address: input?.address,
         balance: newBalance / web3.LAMPORTS_PER_SOL,
       };
+    }),
+  transferSol: publicProcedure
+    .input(
+      z.object({
+        senderAddress: z.string(),
+        amount: z.number(),
+        receiverAddress: z.string(),
+      })
+    )
+    .mutation(async ({ input }) => {
+
+      const connection = new web3.Connection(web3.clusterApiUrl("devnet"));
+
+      const senderPublicKey = new web3.PublicKey(input?.senderAddress);
+      const receiverPublicKey = new web3.PublicKey(input?.receiverAddress);
+      
+      const transaction = new web3.Transaction().add(
+        web3.SystemProgram.transfer({
+            fromPubkey: senderPublicKey,
+            toPubkey: receiverPublicKey,
+            lamports: input?.amount * web3.LAMPORTS_PER_SOL,
+        })
+    );
+
+      return { transaction: transaction };
     }),
 });
