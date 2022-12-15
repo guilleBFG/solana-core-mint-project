@@ -33,7 +33,15 @@ const TransferSol = () => {
 
       signature = await sendTransaction(transaction, connection);
 
-      await connection.confirmTransaction(signature, "confirmed");
+
+
+      const latestBlockHash = await connection.getLatestBlockhash();
+
+      await connection.confirmTransaction({
+        blockhash: latestBlockHash.blockhash,
+        lastValidBlockHeight: latestBlockHash.lastValidBlockHeight,
+        signature: signature,
+      });
 
       console.log(signature);
 
@@ -64,6 +72,7 @@ const TransferSol = () => {
           type="number"
           onChange={(event) => setAmount(event.target.value)}
         ></input>
+        <label className="ml-4">Sol</label>
       </div>
 
       <button
