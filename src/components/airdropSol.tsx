@@ -31,7 +31,7 @@ const AirdropSol = () => {
       </button>
       
 
-      {publicKey && !walletBalance.isFetching ?  <div className="text-white">{walletBalance.data?.balance}</div> : <div className="text-white">Loading balance...</div>}
+      {publicKey || !walletBalance.isFetching ?  <div className="text-white">{walletBalance.data?.balance}</div> : <div className="text-white">Loading balance...</div>}
       
     </>
   );

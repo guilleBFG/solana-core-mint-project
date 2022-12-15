@@ -4,6 +4,7 @@ import { useWallet } from "@solana/wallet-adapter-react";
 
 import Connect from "../components/connect";
 import AirdropSol from "../components/airdropSol";
+import TransferSol from "../components/transferSol";
 
 const Home: NextPage = () => {
   const { connected } = useWallet();
@@ -28,6 +29,7 @@ const Home: NextPage = () => {
         </nav>
         <div className="container flex flex-col items-center justify-center gap-12 px-4 py-16 ">
           <AirdropSol/>
+          <TransferSol/>
         </div>
       </main>
     </>
