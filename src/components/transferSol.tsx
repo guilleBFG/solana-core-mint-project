@@ -1,56 +1,49 @@
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import React, { useState } from "react";
-import * as web3 from "@solana/web3.js";
-
+import { Transaction } from "@solana/web3.js"; 
+import { trpc } from "../utils/trpc";
 
 const TransferSol = () => {
   const { connection } = useConnection();
-  const { publicKey, sendTransaction } = useWallet();
+  const wallet = useWallet();
   const [receiverWallet, setReceiverWallet] = useState("");
   const [amount, setAmount] = useState("");
+  const { mutateAsync: transferHandler } =
+    trpc.connectionRouter.transferSol.useMutation();
 
   const handleTransfer = async (event: any) => {
     event.preventDefault();
 
+    if (!wallet.publicKey || !connection) return;
+
     const convertedAmt = parseFloat(amount);
 
+    const tx = await transferHandler({
+      amount: convertedAmt,
+      receiverAddress: receiverWallet,
+      senderAddress: wallet.publicKey.toString(),
+    });
 
-    if (!publicKey || !connection) return;
-
-    if (receiverWallet === "" || convertedAmt < 0) return;
-
-    let signature: web3.TransactionSignature = "";
-
-    try {
-
-      const transaction = new web3.Transaction().add(
-        web3.SystemProgram.transfer({
-          fromPubkey: publicKey,
-          toPubkey: new web3.PublicKey(receiverWallet),
-          lamports: convertedAmt * web3.LAMPORTS_PER_SOL,
-        })
-      );
-
-      signature = await sendTransaction(transaction, connection);
-
-
-
+    if (tx) {
+      const transactionFromJson = Transaction.from(tx.data);
       const latestBlockHash = await connection.getLatestBlockhash();
 
-      await connection.confirmTransaction({
-        blockhash: latestBlockHash.blockhash,
-        lastValidBlockHeight: latestBlockHash.lastValidBlockHeight,
-        signature: signature,
-      });
+      console.log(transactionFromJson);
+      const signedTx = await wallet.signTransaction?.(transactionFromJson);
 
-      console.log(signature);
+      if (signedTx) {
+        const signatrue = await connection.sendRawTransaction(
+          signedTx.serialize()
+        );
 
-    } catch (error: any) {
-      console.log("error", `Transaction failed! ${error?.message}`, signature);
+        await connection.confirmTransaction({
+          blockhash: latestBlockHash.blockhash,
+          lastValidBlockHeight: latestBlockHash.lastValidBlockHeight,
+          signature: signatrue,
+        });
+        console.log(signedTx);
+      }
     }
-   
-
-    return;
   };
   return (
     <form className="flex flex-col text-center text-white">

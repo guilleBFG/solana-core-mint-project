@@ -54,32 +54,40 @@ export const mainRouter = router({
           balance: newBalance / web3.LAMPORTS_PER_SOL,
         };
       } catch (error) {
-        console.log(error)
+        console.log(error);
         return { error: error };
       }
     }),
-    transferSol: publicProcedure
-      .input(
-        z.object({
-          senderAddress: z.string(),
-          amount: z.number(),
-          receiverAddress: z.string(),
+  transferSol: publicProcedure
+    .input(
+      z.object({
+        senderAddress: z.string(),
+        amount: z.number(),
+        receiverAddress: z.string(),
+      })
+    )
+    .mutation(async ({ input }) => {
+      const senderPublicKey = new web3.PublicKey(input?.senderAddress);
+      const receiverPublicKey = new web3.PublicKey(input?.receiverAddress);
+
+      const transaction = new web3.Transaction({ feePayer: senderPublicKey }).add(
+        web3.SystemProgram.transfer({
+          fromPubkey: senderPublicKey,
+          toPubkey: receiverPublicKey,
+          lamports: input?.amount * web3.LAMPORTS_PER_SOL,
         })
-      )
-      .mutation(async ({ input }) => {
-  
-  
-        const senderPublicKey = new web3.PublicKey(input?.senderAddress);
-        const receiverPublicKey = new web3.PublicKey(input?.receiverAddress);
-        
-        const transaction = new web3.Transaction().add(
-          web3.SystemProgram.transfer({
-              fromPubkey: senderPublicKey,
-              toPubkey: receiverPublicKey,
-              lamports: input?.amount * web3.LAMPORTS_PER_SOL,
-          })
       );
-  
-        return { transaction: transaction };
-      }),
+      const connection = new web3.Connection(web3.clusterApiUrl("devnet"));
+
+      const block = (await connection.getLatestBlockhash("finalized"))
+        .blockhash;
+      transaction.recentBlockhash = block;
+      
+      const encodedTx = transaction.serialize({
+        requireAllSignatures: false,
+        verifySignatures: false,
+      });
+
+      return encodedTx.toJSON();
+    }),
 });
