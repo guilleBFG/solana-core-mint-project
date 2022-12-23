@@ -4,7 +4,8 @@ import { trpc } from "../utils/trpc";
 
 const AirdropSol = () => {
   const { publicKey } = useWallet();
-  const airdropRequest = trpc.connectionRouter.airdropSol.useMutation();
+  const { isSuccess, mutateAsync: airdropRequest } =
+    trpc.connectionRouter.airdropSol.useMutation();
   const walletBalance = trpc.connectionRouter.getBalance.useQuery({
     address: publicKey?.toString(),
   });
@@ -12,12 +13,12 @@ const AirdropSol = () => {
   const requestAirdrop = async () => {
     if (!publicKey) return;
 
-    await airdropRequest.mutateAsync({
+    await airdropRequest({
       address: publicKey.toString(),
       amount: 1,
     });
 
-    walletBalance.refetch();
+    if (isSuccess) walletBalance.refetch();
   };
 
   return (
@@ -29,10 +30,12 @@ const AirdropSol = () => {
         Airdrop 1 Sol
         {/*hello.data ? hello.data.greeting : "Loading tRPC query..."*/}
       </button>
-      
 
-      {publicKey || !walletBalance.isFetching ?  <div className="text-white">{walletBalance.data?.balance}</div> : <div className="text-white">Loading balance...</div>}
-      
+      {publicKey || !walletBalance.isFetching || !walletBalance.isLoading? (
+        <div className="text-white">{walletBalance.data?.balance}</div>
+      ) : (
+        <div className="text-white">Loading balance...</div>
+      )}
     </>
   );
 };
