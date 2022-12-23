@@ -11,7 +11,7 @@ const TransferSol = () => {
   const { mutateAsync: transferHandler } =
     trpc.connectionRouter.transferSol.useMutation();
 
-  const handleTransfer = async (event: any) => {
+  const handleTransfer = async (event: Event) => {
     event.preventDefault();
 
     if (!wallet.publicKey || !connection) return;
